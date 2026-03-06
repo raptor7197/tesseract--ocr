@@ -12,6 +12,7 @@ Requires ``tesseract-ocr`` to be installed on the system and the
 """
 
 import logging
+import shlex
 import shutil
 
 import cv2
@@ -24,6 +25,7 @@ from src.config import (
     TESSERACT_LANG,
     TESSERACT_OEM,
     TESSERACT_PSM,
+    TESSERACT_PSM_CANDIDATES,
 )
 
 logger = logging.getLogger(__name__)
@@ -67,7 +69,8 @@ def _build_tesseract_config(
     """
     parts = [f"--psm {psm}", f"--oem {oem}"]
     if whitelist:
-        parts.append(f"-c tessedit_char_whitelist={whitelist}")
+        safe_whitelist = shlex.quote(whitelist)
+        parts.append(f"-c tessedit_char_whitelist={safe_whitelist}")
     return " ".join(parts)
 
 
@@ -121,6 +124,7 @@ def recognize(
         logger.warning("recognize() received non-ndarray input of type %s", type(crop))
         return empty_result
 
+    _check_tesseract_installed()
     config = _build_tesseract_config(psm=psm, oem=oem, whitelist=whitelist)
 
     try:
@@ -298,8 +302,35 @@ def recognize_batch(crops, min_confidence=TESSERACT_CONF_THRESHOLD, **kwargs):
     return results
 
 
+def _best_psm_result(
+    crop,
+    min_confidence,
+    psm_candidates,
+    **kwargs,
+):
+    """
+    Run OCR across multiple PSM options and keep the most confident hit.
+    """
+    best = {"text": "", "confidence": 0.0, "words": []}
+    best_psm = None
+
+    for psm in psm_candidates:
+        result = recognize_and_filter(
+            crop, min_confidence=min_confidence, psm=psm, **kwargs
+        )
+        if result["text"] and result["confidence"] > best["confidence"]:
+            best = result
+            best_psm = psm
+
+    return best, best_psm
+
+
 def recognize_with_fallback(
-    enhanced_crop, raw_crop, min_confidence=TESSERACT_CONF_THRESHOLD, **kwargs
+    enhanced_crop,
+    raw_crop,
+    min_confidence=TESSERACT_CONF_THRESHOLD,
+    psm_candidates=TESSERACT_PSM_CANDIDATES,
+    **kwargs,
 ):
     """
     Attempt OCR on the enhanced (binarized) crop first; if the result is
@@ -331,20 +362,28 @@ def recognize_with_fallback(
 
     # Try enhanced crop first
     if enhanced_crop is not None and enhanced_crop.size > 0:
-        enhanced_result = recognize_and_filter(
-            enhanced_crop, min_confidence=min_confidence, **kwargs
+        enhanced_result, enhanced_psm = _best_psm_result(
+            enhanced_crop,
+            min_confidence=min_confidence,
+            psm_candidates=psm_candidates,
+            **kwargs,
         )
         if enhanced_result["text"]:
-            return enhanced_result, "enhanced"
+            suffix = f"psm{enhanced_psm}" if enhanced_psm is not None else "psm?"
+            return enhanced_result, f"enhanced-{suffix}"
 
     # Fall back to raw crop
     if raw_crop is not None and raw_crop.size > 0:
         logger.debug("Enhanced crop produced no text, falling back to raw crop")
-        raw_result = recognize_and_filter(
-            raw_crop, min_confidence=min_confidence, **kwargs
+        raw_result, raw_psm = _best_psm_result(
+            raw_crop,
+            min_confidence=min_confidence,
+            psm_candidates=psm_candidates,
+            **kwargs,
         )
         if raw_result["text"]:
-            return raw_result, "raw"
+            suffix = f"psm{raw_psm}" if raw_psm is not None else "psm?"
+            return raw_result, f"raw-{suffix}"
 
     logger.debug("Neither enhanced nor raw crop produced text")
     return empty, "none"

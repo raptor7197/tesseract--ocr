@@ -19,10 +19,15 @@ from src.config import (
     BILATERAL_D,
     BILATERAL_SIGMA_COLOR,
     BILATERAL_SIGMA_SPACE,
+    CLAHE_CLIP_LIMIT,
+    CLAHE_TILE_GRID_SIZE,
+    CROP_BOX_SCALE,
     CROP_PADDING,
     EAST_INPUT_HEIGHT,
     EAST_INPUT_WIDTH,
     EAST_MEAN,
+    MORPH_ITERATIONS,
+    MORPH_KERNEL_SIZE,
 )
 
 logger = logging.getLogger(__name__)
@@ -275,9 +280,15 @@ def enhance_crop(crop):
         sigmaSpace=BILATERAL_SIGMA_SPACE,
     )
 
+    # Boost local contrast via CLAHE before binarization
+    clahe = cv2.createCLAHE(
+        clipLimit=CLAHE_CLIP_LIMIT, tileGridSize=CLAHE_TILE_GRID_SIZE
+    )
+    contrasted = clahe.apply(denoised)
+
     # Adaptive Gaussian thresholding handles uneven illumination
     binary = cv2.adaptiveThreshold(
-        denoised,
+        contrasted,
         maxValue=255,
         adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
         thresholdType=cv2.THRESH_BINARY,
@@ -285,7 +296,33 @@ def enhance_crop(crop):
         C=ADAPTIVE_THRESH_C,
     )
 
-    return binary
+    # Morphological closing reconnects broken strokes/thin gaps
+    kernel_size = max(1, MORPH_KERNEL_SIZE)
+    if kernel_size % 2 == 0:
+        kernel_size += 1
+    kernel = cv2.getStructuringElement(
+        cv2.MORPH_RECT, (kernel_size, kernel_size)
+    )
+    iterations = max(1, MORPH_ITERATIONS)
+    closed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel, iterations=iterations)
+
+    return closed
+
+
+def scale_box(box, scale, image_shape):
+    """
+    Uniformly scale the box around its centroid while clamping to image bounds.
+    """
+    if scale <= 1.0:
+        return box
+
+    center = np.mean(box, axis=0)
+    scaled = (box - center) * scale + center
+
+    h, w = image_shape[:2]
+    scaled[:, 0] = np.clip(scaled[:, 0], 0, w - 1)
+    scaled[:, 1] = np.clip(scaled[:, 1], 0, h - 1)
+    return scaled
 
 
 def preprocess_crop(image, box, angle, padding=CROP_PADDING):
@@ -318,7 +355,9 @@ def preprocess_crop(image, box, angle, padding=CROP_PADDING):
         The fully preprocessed (grayscale, denoised, binarized) crop
         ready for Tesseract.
     """
-    crop = rotate_crop(image, box, angle)
+    scaled_box = scale_box(box, CROP_BOX_SCALE, image.shape)
+
+    crop = rotate_crop(image, scaled_box, angle)
     if crop is None:
         return None, None
 
