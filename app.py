@@ -18,6 +18,7 @@ import logging
 import os
 import tempfile
 import time
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -40,7 +41,6 @@ from src.pipeline import SceneTextPipeline, annotate_image
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="Scene Text Detection & Recognition",
-    page_icon="🔤",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -105,19 +105,317 @@ def save_temp_image(pil_image, suffix=".jpg"):
 def format_confidence(conf):
     """Format a confidence value as a colored string for display."""
     if conf >= 80:
-        return f"🟢 {conf:.1f}%"
+        return f"High ({conf:.1f}%)"
     elif conf >= 50:
-        return f"🟡 {conf:.1f}%"
+        return f"Medium ({conf:.1f}%)"
     else:
-        return f"🔴 {conf:.1f}%"
+        return f"Low ({conf:.1f}%)"
 
+
+def render_page_header():
+    """Render the hero section with top-level context."""
+    st.title("Natural Scene Text Detection & Recognition")
+    st.caption(
+        "A hybrid EAST + Tesseract OCR pipeline for robust scene text understanding."
+    )
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Detection Backbone", "EAST (OpenCV dnn)")
+    col2.metric("Recognition Engine", "Tesseract OCR")
+    col3.metric("Pipeline Latency", "~1s / 1MP image (CPU)")
+
+    st.markdown(
+        "Built for research demos, assistive tooling, and navigation use cases where "
+        "natural scene images replace clean scanned documents."
+    )
+
+
+def render_project_snapshot():
+    """Show high-level goals, scope, and usage tips."""
+    st.markdown("### Project Snapshot")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("**Core Objectives (PRD §3)**")
+        st.markdown(
+            "- O1: Localize text regions with EAST on CPU hardware.\n"
+            "- O2: Recognize cropped regions with Tesseract + preprocessing.\n"
+            "- O3: Handle noisy, multi-oriented street or storefront text.\n"
+            "- O4: Offer both CLI and Streamlit experiences."
+        )
+        st.markdown("**In Scope**")
+        st.markdown(
+            "- Printed English text (JPEG/PNG scenes)\n"
+            "- Batch & single-image processing\n"
+            "- Evaluation against ICDAR-style ground truth\n"
+            "- Modular code for experimentation"
+        )
+
+    with col2:
+        st.markdown("**Target Users**")
+        st.markdown(
+            "- Researchers / students benchmarking OCR stacks\n"
+            "- Assistive tech builders translating street signs\n"
+            "- Navigation or AR apps enriching map metadata\n"
+            "- Annotation teams accelerating labelling workflows"
+        )
+        st.markdown("**Key Assets**")
+        st.markdown(
+            "- `models/frozen_east_text_detection.pb`\n"
+            "- `data/sample_images/` + `data/ground_truth/`\n"
+            "- `output/annotated/` + `output/results/`\n"
+            "- Documentation: `README.md`, `PRD.md`"
+        )
+
+
+def load_sample_assets():
+    """Return a sample prediction JSON and annotated image if available."""
+    results_dir = Path("output/results")
+    annotated_dir = Path("output/annotated")
+
+    json_path = next(results_dir.glob("*.json"), None) if results_dir.exists() else None
+    if json_path is None:
+        return None
+
+    try:
+        with open(json_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    image_name = Path(payload.get("image_path", "")).stem
+    annotated_path = None
+    if annotated_dir.exists():
+        annotated_path = next(
+            annotated_dir.glob(f"{image_name}*_annotated.*"), None
+        )
+
+    return {
+        "json_path": json_path,
+        "annotated_path": annotated_path,
+        "payload": payload,
+    }
+
+
+def render_pipeline_tab():
+    """Display an in-depth walkthrough of the workflow."""
+    st.subheader("Pipeline Walkthrough")
+    st.markdown(
+        "The system follows a modular, two-stage design so detection and recognition "
+        "can be tuned independently."
+    )
+
+    steps = [
+        {
+            "title": "Step 1: Preprocessing",
+            "file": "src/preprocessor.py",
+            "details": [
+                "Resize inputs to multiples of 32 (default 320x320) while preserving a copy of the original frame.",
+                "Apply channel-wise mean subtraction (123.68, 116.78, 103.94).",
+                "Expose helpers for rotation-aware cropping and enhancement.",
+            ],
+        },
+        {
+            "title": "Step 2: EAST Detection",
+            "file": "src/detector.py",
+            "details": [
+                "Loads the frozen EAST graph once via OpenCV `dnn`.",
+                "Decodes geometry + score maps into rotated boxes then applies NMS.",
+                "Thresholds controlled by `EAST_CONF_THRESHOLD` and `EAST_NMS_THRESHOLD`.",
+            ],
+        },
+        {
+            "title": "Step 3: Crop & Enhance",
+            "file": "src/preprocessor.py",
+            "details": [
+                "Deskew crops by rotating around detected angles.",
+                "Adds configurable padding (default 4 px).",
+                "Produces grayscale + adaptive thresholded variants for OCR fallback.",
+            ],
+        },
+        {
+            "title": "Step 4: Tesseract Recognition",
+            "file": "src/recognizer.py",
+            "details": [
+                "Uses PSM 7 (single line) with English whitelist.",
+                "Falls back from enhanced to raw crop when confidence < threshold.",
+                "Outputs text, confidence, and crop source tag.",
+            ],
+        },
+        {
+            "title": "Step 5: Pipeline Orchestration",
+            "file": "src/pipeline.py",
+            "details": [
+                "Coordinates detection -> preprocessing -> recognition.",
+                "Flattens bounding boxes, logs timings, and returns JSON-serializable results.",
+                "Provides helpers for directory processing and annotation rendering.",
+            ],
+        },
+    ]
+
+    for step in steps:
+        with st.expander(f"{step['title']} - {step['file']}"):
+            for bullet in step["details"]:
+                st.markdown(f"- {bullet}")
+
+    st.markdown("#### System Architecture (PRD §6)")
+    architecture = "\n".join(
+        [
+            "Input Image",
+            "    |",
+            "    v",
+            "Preprocessor -> EAST Detector -> Crop & Enhance -> "
+            "Tesseract OCR -> Output JSON + Annotated Image",
+        ]
+    )
+    st.code(architecture, language="text")
+
+    st.markdown("#### Module Breakdown")
+    module_rows = [
+        {
+            "Module": "CLI Entrypoint",
+            "File": "main.py",
+            "Purpose": "Batch/CLI execution of the SceneTextPipeline",
+        },
+        {
+            "Module": "Streamlit App",
+            "File": "app.py",
+            "Purpose": "Interactive upload + workflow showcase",
+        },
+        {
+            "Module": "Evaluator",
+            "File": "evaluate.py",
+            "Purpose": "Computes precision/recall, word accuracy, CER",
+        },
+        {
+            "Module": "Config",
+            "File": "src/config.py",
+            "Purpose": "Centralizes all tunable constants",
+        },
+        {
+            "Module": "Tests",
+            "File": "tests/",
+            "Purpose": "Unit tests for preprocessor/detector/recognizer/pipeline",
+        },
+    ]
+    st.table(module_rows)
+
+
+def render_data_tab():
+    """Surface dataset information, evaluation knobs, and sample outputs."""
+    st.subheader("Datasets & Evaluation Data")
+    dataset_rows = [
+        {
+            "Dataset": "Sample Scenes",
+            "Location": "data/sample_images/",
+            "Purpose": "Manual smoke tests + demo inside this UI",
+        },
+        {
+            "Dataset": "Ground Truth",
+            "Location": "data/ground_truth/",
+            "Purpose": "JSON annotations for evaluation script",
+        },
+        {
+            "Dataset": "ICDAR 2013/2015",
+            "Location": "external",
+            "Purpose": "Benchmark datasets referenced in PRD §17",
+        },
+    ]
+    st.table(dataset_rows)
+
+    st.markdown("#### Evaluation Workflow")
+    st.markdown(
+        "Run `evaluate.py` to compare predictions against `data/ground_truth/`.\n"
+        "Key metrics include Precision, Recall, F1 for detection and Word Accuracy + CER for recognition."
+    )
+    st.code(
+        "python evaluate.py --predictions output/results/ --ground-truth data/ground_truth/\n"
+        "python evaluate.py --images data/sample_images/ --ground-truth data/ground_truth/ --iou 0.6",
+        language="bash",
+    )
+
+    st.markdown("#### Sample Prediction Artifact")
+    sample = load_sample_assets()
+    if sample is None:
+        st.info(
+            "No prediction artifacts found in `output/results/`. Upload an image via the demo or run `main.py` to generate them."
+        )
+        return
+
+    payload = sample["payload"]
+    detections = payload.get("detections", [])
+    recognized = [d for d in detections if d.get("text")]
+    col_a, col_b, col_c = st.columns(3)
+    col_a.metric("Regions Detected", len(detections))
+    col_b.metric("Text Recognized", len(recognized))
+    col_c.metric("Processing Time", f"{payload.get('processing_time_ms', 0):.0f} ms")
+
+    annotated_path = sample.get("annotated_path")
+    if annotated_path and annotated_path.exists():
+        st.image(
+            str(annotated_path),
+            caption=f"Annotated output: {annotated_path.name}",
+            use_container_width=True,
+        )
+
+    preview = {
+        "image_path": payload.get("image_path"),
+        "image_size": payload.get("image_size"),
+        "detections_example": detections[:3],
+    }
+    st.json(preview)
+
+
+def render_docs_tab():
+    """Provide quick references for commands, configuration, and troubleshooting."""
+    st.subheader("Docs & Resources")
+    st.markdown(
+        "- **Product Requirements:** `PRD.md`\n"
+        "- **Technical Overview & Usage:** `README.md`\n"
+        "- **Setup Script:** `setup.sh` (installs deps + downloads EAST model)"
+    )
+
+    st.markdown("#### CLI Usage")
+    st.code(
+        "# Single image\npython main.py --image path/to/image.jpg --visualize\n\n"
+        "# Batch directory\npython main.py --dir data/sample_images/ --save-json",
+        language="bash",
+    )
+
+    st.markdown("#### Configuration Tips (`src/config.py`)")
+    st.markdown(
+        "- `EAST_INPUT_WIDTH/HEIGHT`: multiples of 32; increase for smaller text.\n"
+        "- `EAST_CONF_THRESHOLD`: raise to reduce false positives.\n"
+        "- `TESSERACT_CONF_THRESHOLD`: lower to inspect low-confidence words.\n"
+        "- `CROP_PADDING`: increase if characters are clipped."
+    )
+
+    st.markdown("#### Testing & Quality Gates")
+    st.code("python -m pytest tests/ -v", language="bash")
+    st.markdown(
+        "Unit tests cover preprocessing, detection decoding, OCR integration, and the full pipeline."
+    )
+
+    st.markdown("#### Troubleshooting")
+    st.markdown(
+        "- Missing EAST model -> run `./setup.sh` or download into `models/`.\n"
+        "- Missing Tesseract -> install via system package manager (`tesseract-ocr`).\n"
+        "- Non-multiple input sizes -> adjust Streamlit sliders or CLI args."
+    )
+
+    st.markdown("#### References")
+    st.markdown(
+        "- EAST: Zhou et al., 2017 (`frozen_east_text_detection.pb`).\n"
+        "- Tesseract OCR 4.x.\n"
+        "- ICDAR 2013 & 2015 scene text benchmarks."
+    )
 
 # ---------------------------------------------------------------------------
 # Sidebar — parameters and controls
 # ---------------------------------------------------------------------------
 def render_sidebar():
     """Render the sidebar with parameter controls and return their values."""
-    st.sidebar.title("⚙️ Settings")
+    st.sidebar.title("Settings")
 
     st.sidebar.markdown("### EAST Detector")
 
@@ -176,7 +474,7 @@ def render_sidebar():
         "A hybrid OCR pipeline combining the EAST deep learning "
         "text detector with Tesseract OCR for accurate text "
         "extraction from natural scene images.\n\n"
-        "📄 [Project PRD](PRD.md)"
+        "[Project PRD](PRD.md)"
     )
 
     return {
@@ -193,7 +491,7 @@ def render_sidebar():
 # ---------------------------------------------------------------------------
 def render_upload_section():
     """Render the image upload section and return the uploaded file."""
-    st.title("🔤 Natural Scene Text Detection & Recognition")
+    st.subheader("Run the Pipeline on Your Image")
     st.markdown(
         "Upload a natural scene image (street sign, shop board, billboard, etc.) "
         "and the system will detect and recognize text in it."
@@ -213,7 +511,7 @@ def render_results(result, original_pil, annotated_pil):
 
     # ---- Images side by side ----
     st.markdown("---")
-    st.subheader("📸 Results")
+    st.subheader("Results")
 
     col1, col2 = st.columns(2)
     with col1:
@@ -247,7 +545,7 @@ def render_results(result, original_pil, annotated_pil):
     # ---- Detection table ----
     if text_detections:
         st.markdown("---")
-        st.subheader("📝 Detected Text")
+        st.subheader("Detected Text")
 
         table_data = []
         for det in text_detections:
@@ -274,7 +572,7 @@ def render_results(result, original_pil, annotated_pil):
 
     # ---- All detections (including empty) in expander ----
     if detections:
-        with st.expander(f"🔍 All {total_regions} detected regions (including empty)"):
+        with st.expander(f"All {total_regions} detected regions (including empty)"):
             for det in detections:
                 text = det.get("text", "")
                 conf = det.get("confidence", 0)
@@ -283,7 +581,7 @@ def render_results(result, original_pil, annotated_pil):
                 status = f'"{text}"' if text else "(no text recognized)"
 
                 st.markdown(
-                    f"**Region {det['id']}:** {status} — "
+                    f"**Region {det['id']}:** {status} - "
                     f"OCR: {conf:.1f}%, Detection: {det_conf:.1f}%, Source: {source}"
                 )
 
@@ -294,7 +592,7 @@ def render_results(result, original_pil, annotated_pil):
     with col_dl1:
         json_str = json.dumps(result, indent=2, ensure_ascii=False)
         st.download_button(
-            label="📥 Download JSON Results",
+            label="Download JSON Results",
             data=json_str,
             file_name="scene_text_results.json",
             mime="application/json",
@@ -305,7 +603,7 @@ def render_results(result, original_pil, annotated_pil):
         buf = io.BytesIO()
         annotated_pil.save(buf, format="JPEG", quality=95)
         st.download_button(
-            label="🖼️ Download Annotated Image",
+            label="Download Annotated Image",
             data=buf.getvalue(),
             file_name="annotated_result.jpg",
             mime="image/jpeg",
@@ -332,117 +630,122 @@ def render_no_model_error():
 def main():
     """Main Streamlit application."""
 
-    # Check if the EAST model exists before doing anything
-    if not os.path.isfile(EAST_MODEL_PATH):
-        render_upload_section()
-        render_no_model_error()
-        return
+    model_available = os.path.isfile(EAST_MODEL_PATH)
 
-    # Render sidebar and get parameters
+    # Render sidebar and get parameters (even if the model is missing so users can explore settings)
     params = render_sidebar()
 
-    # Render upload section
-    uploaded_file = render_upload_section()
+    # Hero + context sections
+    render_page_header()
+    render_project_snapshot()
 
-    if uploaded_file is None:
-        # Show instructions when no image is uploaded
-        st.markdown("---")
-        st.markdown(
-            """
-            ### How it works
+    demo_tab, pipeline_tab, data_tab, docs_tab = st.tabs(
+        ["Interactive Demo", "Pipeline", "Data & Evaluation", "Docs"]
+    )
 
-            1. **Upload** a natural scene image containing text (signs, boards, etc.)
-            2. **EAST Detector** localizes text regions using a deep learning model
-            3. **Preprocessing** enhances each detected region (grayscale, threshold, denoise)
-            4. **Tesseract OCR** recognizes characters in each preprocessed region
-            5. **Results** are displayed with annotated bounding boxes and recognized text
+    with pipeline_tab:
+        render_pipeline_tab()
 
-            ### Tips for best results
+    with data_tab:
+        render_data_tab()
 
-            - 📏 **Image size**: Larger images with clearly visible text work best.
-            - 🔍 **Small text**: Increase the input width/height in the sidebar (e.g., 640×640).
-            - 🎯 **False positives**: Increase the detection confidence threshold.
-            - 📝 **Missed text**: Decrease the detection confidence threshold.
-            - 🔤 **Poor recognition**: Decrease the minimum word confidence.
-            """
-        )
+    with docs_tab:
+        render_docs_tab()
 
-        # Show sample usage with a placeholder
-        with st.expander("📋 Sample JSON output format"):
-            sample = {
-                "image_path": "/path/to/image.jpg",
-                "image_size": [480, 640],
-                "detections": [
-                    {
-                        "id": 1,
-                        "bbox": [102, 55, 310, 55, 310, 98, 102, 98],
-                        "text": "MAIN STREET",
-                        "confidence": 87.5,
-                        "detection_confidence": 92.3,
-                        "source": "enhanced",
-                    }
-                ],
-                "total_detections": 1,
-                "processing_time_ms": 312.4,
-            }
-            st.json(sample)
-        return
+    with demo_tab:
+        if not model_available:
+            render_upload_section()
+            render_no_model_error()
+            return
 
-    # ---- Process the uploaded image ----
+        uploaded_file = render_upload_section()
 
-    # Load the uploaded image
-    try:
-        pil_image = Image.open(uploaded_file).convert("RGB")
-    except Exception as e:
-        st.error(f"Failed to open the uploaded image: {e}")
-        return
+        if uploaded_file is None:
+            st.markdown("---")
+            st.markdown(
+                """
+                ### How it works
 
-    # Show a spinner while processing
-    with st.spinner("🔍 Detecting and recognizing text..."):
-        # Save to a temp file because the pipeline expects a file path
-        temp_path = save_temp_image(pil_image, suffix=".jpg")
+                1. **Upload** a natural scene image containing text (signs, boards, etc.)
+                2. **EAST Detector** localizes text regions using a deep learning model
+                3. **Preprocessing** enhances each detected region (grayscale, threshold, denoise)
+                4. **Tesseract OCR** recognizes characters in each preprocessed region
+                5. **Results** are displayed with annotated bounding boxes and recognized text
 
+                ### Tips for best results
+
+                - Image size: Larger images with clearly visible text work best.
+                - Small text: Increase the input width/height in the sidebar (e.g., 640x640).
+                - False positives: Increase the detection confidence threshold.
+                - Missed text: Decrease the detection confidence threshold.
+                - Poor recognition: Decrease the minimum word confidence.
+                """
+            )
+
+            with st.expander("Sample JSON output format"):
+                sample = {
+                    "image_path": "/path/to/image.jpg",
+                    "image_size": [480, 640],
+                    "detections": [
+                        {
+                            "id": 1,
+                            "bbox": [102, 55, 310, 55, 310, 98, 102, 98],
+                            "text": "MAIN STREET",
+                            "confidence": 87.5,
+                            "detection_confidence": 92.3,
+                            "source": "enhanced",
+                        }
+                    ],
+                    "total_detections": 1,
+                    "processing_time_ms": 312.4,
+                }
+                st.json(sample)
+            return
+
+        # ---- Process the uploaded image ----
         try:
-            # Get or create the pipeline with current parameters
-            pipeline = get_pipeline(
-                east_width=params["east_width"],
-                east_height=params["east_height"],
-                east_conf=params["east_conf"],
-                east_nms=params["east_nms"],
-                tess_conf=params["tess_conf"],
-            )
-
-            # Run the pipeline
-            result = pipeline.process_image(temp_path)
-
-            # Replace the temp path with the original filename in results
-            result["image_path"] = uploaded_file.name
-
-            # Create the annotated image
-            cv2_image = pil_to_cv2(pil_image)
-            annotated_cv2 = annotate_image(cv2_image, result.get("detections", []))
-            annotated_pil = cv2_to_pil(annotated_cv2)
-
-            # Render the results
-            render_results(result, pil_image, annotated_pil)
-
-        except EnvironmentError as e:
-            st.error(
-                f"**Environment error:** {e}\n\n"
-                "Make sure Tesseract OCR is installed:\n"
-                "```\n"
-                "sudo apt install tesseract-ocr tesseract-ocr-eng\n"
-                "```"
-            )
+            pil_image = Image.open(uploaded_file).convert("RGB")
         except Exception as e:
-            st.error(f"**Processing failed:** {e}")
-            logger.exception("Error processing image: %s", e)
-        finally:
-            # Clean up the temp file
+            st.error(f"Failed to open the uploaded image: {e}")
+            return
+
+        with st.spinner("Detecting and recognizing text..."):
+            temp_path = save_temp_image(pil_image, suffix=".jpg")
+
             try:
-                os.unlink(temp_path)
-            except OSError:
-                pass
+                pipeline = get_pipeline(
+                    east_width=params["east_width"],
+                    east_height=params["east_height"],
+                    east_conf=params["east_conf"],
+                    east_nms=params["east_nms"],
+                    tess_conf=params["tess_conf"],
+                )
+
+                result = pipeline.process_image(temp_path)
+                result["image_path"] = uploaded_file.name
+
+                cv2_image = pil_to_cv2(pil_image)
+                annotated_cv2 = annotate_image(cv2_image, result.get("detections", []))
+                annotated_pil = cv2_to_pil(annotated_cv2)
+
+                render_results(result, pil_image, annotated_pil)
+
+            except EnvironmentError as e:
+                st.error(
+                    f"**Environment error:** {e}\n\n"
+                    "Make sure Tesseract OCR is installed:\n"
+                    "```\n"
+                    "sudo apt install tesseract-ocr tesseract-ocr-eng\n"
+                    "```"
+                )
+            except Exception as e:
+                st.error(f"**Processing failed:** {e}")
+                logger.exception("Error processing image: %s", e)
+            finally:
+                try:
+                    os.unlink(temp_path)
+                except OSError:
+                    pass
 
 
 if __name__ == "__main__":

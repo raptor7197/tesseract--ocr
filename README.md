@@ -50,23 +50,23 @@ Input Image (street sign, shop board, etc.)
         │
         ▼
 ┌─────────────────────┐
-│  1. Preprocessing    │  Resize to 320×320 (multiple of 32), mean subtraction
+│  1. Preprocessing   │  Resize to 320×320 (multiple of 32), mean subtraction
 └────────┬────────────┘
          ▼
 ┌─────────────────────┐
-│  2. EAST Detector    │  Score map + geometry map → rotated bounding boxes → NMS
+│  2. EAST Detector   │  Score map + geometry map → rotated bounding boxes → NMS
 └────────┬────────────┘
          ▼
 ┌─────────────────────┐
-│  3. Crop & Enhance   │  Rotation-aware crop → padding → grayscale → adaptive threshold
+│  3. Crop & Enhance  │  Rotation-aware crop → padding → grayscale → adaptive threshold
 └────────┬────────────┘
          ▼
 ┌─────────────────────┐
-│  4. Tesseract OCR    │  PSM 7 (single text line) → word text + confidence
+│  4. Tesseract OCR   │  PSM 7 (single text line) → word text + confidence
 └────────┬────────────┘
          ▼
 ┌─────────────────────┐
-│  5. Output           │  Annotated image + JSON results with bboxes, text, confidence
+│  5. Output          │  Annotated image + JSON results with bboxes, text, confidence
 └─────────────────────┘
 ```
 
@@ -157,25 +157,20 @@ source venv/bin/activate
 ### Option B: Manual Setup
 
 ```bash
-# 1. Install Tesseract OCR
 sudo apt update && sudo apt install -y tesseract-ocr tesseract-ocr-eng
 
-# 2. Install Python dependencies
 pip install -r requirements.txt
 
-# 3. Download the EAST model
 mkdir -p models
 wget -O models/frozen_east_text_detection.pb \
   "https://github.com/oyyd/frozen_east_text_detection.pb/raw/master/frozen_east_text_detection.pb"
 
-# 4. Create output directories
 mkdir -p output/annotated output/results data/sample_images data/ground_truth
 ```
 
 ### Verify Installation
 
 ```bash
-# Quick smoke test — should print version info without errors
 python -c "
 import cv2, pytesseract, numpy, imutils
 print(f'OpenCV:     {cv2.__version__}')

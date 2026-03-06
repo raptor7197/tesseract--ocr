@@ -1,0 +1,742 @@
+{
+  "image_path": "/home/krxsna/dev/ml-project/data/sample_images/Gemini_Generated_Image_5caqst5caqst5caq(2).png",
+  "image_size": [
+    768,
+    1408
+  ],
+  "detections": [
+    {
+      "id": 1,
+      "bbox": [
+        111,
+        435,
+        176,
+        433,
+        178,
+        457,
+        113,
+        459
+      ],
+      "text": "Event",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 2,
+      "bbox": [
+        314,
+        557,
+        372,
+        557,
+        372,
+        582,
+        314,
+        582
+      ],
+      "text": "Alert",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 3,
+      "bbox": [
+        704,
+        92,
+        1017,
+        89,
+        1019,
+        128,
+        705,
+        132
+      ],
+      "text": "IM architecture",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 4,
+      "bbox": [
+        996,
+        546,
+        1113,
+        544,
+        1114,
+        571,
+        998,
+        573
+      ],
+      "text": "Metadata",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 5,
+      "bbox": [
+        1163,
+        185,
+        1344,
+        180,
+        1348,
+        217,
+        1167,
+        223
+      ],
+      "text": "Architecture",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 6,
+      "bbox": [
+        611,
+        30,
+        860,
+        28,
+        861,
+        65,
+        612,
+        67
+      ],
+      "text": "traditional F",
+      "confidence": 93.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm8"
+    },
+    {
+      "id": 7,
+      "bbox": [
+        1063,
+        31,
+        1279,
+        28,
+        1280,
+        64,
+        1065,
+        67
+      ],
+      "text": "Al-driven",
+      "confidence": 91.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 8,
+      "bbox": [
+        406,
+        30,
+        614,
+        27,
+        616,
+        66,
+        408,
+        69
+      ],
+      "text": "between",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm8"
+    },
+    {
+      "id": 9,
+      "bbox": [
+        379,
+        92,
+        479,
+        89,
+        482,
+        127,
+        382,
+        130
+      ],
+      "text": "rule-",
+      "confidence": 91.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 10,
+      "bbox": [
+        953,
+        32,
+        1043,
+        29,
+        1046,
+        67,
+        956,
+        69
+      ],
+      "text": "and",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 11,
+      "bbox": [
+        976,
+        187,
+        1074,
+        183,
+        1078,
+        220,
+        981,
+        224
+      ],
+      "text": "",
+      "confidence": 0.0,
+      "detection_confidence": 100.0,
+      "source": "none"
+    },
+    {
+      "id": 12,
+      "bbox": [
+        344,
+        306,
+        400,
+        305,
+        400,
+        327,
+        345,
+        327
+      ],
+      "text": "Event",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 13,
+      "bbox": [
+        484,
+        94,
+        631,
+        90,
+        634,
+        126,
+        488,
+        130
+      ],
+      "text": "-based",
+      "confidence": 92.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm8"
+    },
+    {
+      "id": 14,
+      "bbox": [
+        267,
+        420,
+        341,
+        422,
+        338,
+        449,
+        265,
+        447
+      ],
+      "text": "Static",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 15,
+      "bbox": [
+        120,
+        185,
+        289,
+        180,
+        294,
+        220,
+        124,
+        226
+      ],
+      "text": "Traditional",
+      "confidence": 67.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 16,
+      "bbox": [
+        364,
+        183,
+        563,
+        176,
+        567,
+        216,
+        369,
+        222
+      ],
+      "text": "Architecture",
+      "confidence": 95.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 17,
+      "bbox": [
+        121,
+        29,
+        396,
+        28,
+        396,
+        78,
+        121,
+        79
+      ],
+      "text": "Comparison",
+      "confidence": 90.0,
+      "detection_confidence": 100.0,
+      "source": "enhanced-psm8"
+    },
+    {
+      "id": 18,
+      "bbox": [
+        756,
+        184,
+        902,
+        179,
+        906,
+        221,
+        761,
+        226
+      ],
+      "text": "Al-driven R",
+      "confidence": 91.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 19,
+      "bbox": [
+        1281,
+        428,
+        1368,
+        430,
+        1366,
+        456,
+        1280,
+        454
+      ],
+      "text": "Scoring",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 20,
+      "bbox": [
+        1000,
+        295,
+        1117,
+        293,
+        1119,
+        320,
+        1002,
+        322
+      ],
+      "text": "Metadata",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 21,
+      "bbox": [
+        644,
+        91,
+        727,
+        90,
+        730,
+        127,
+        646,
+        129
+      ],
+      "text": "FIM.",
+      "confidence": 86.0,
+      "detection_confidence": 100.0,
+      "source": "enhanced-psm7"
+    },
+    {
+      "id": 22,
+      "bbox": [
+        1233,
+        529,
+        1354,
+        524,
+        1357,
+        552,
+        1237,
+        557
+      ],
+      "text": "Intelliaent",
+      "confidence": 87.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 23,
+      "bbox": [
+        829,
+        311,
+        890,
+        311,
+        890,
+        336,
+        828,
+        335
+      ],
+      "text": "Event",
+      "confidence": 96.0,
+      "detection_confidence": 100.0,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 24,
+      "bbox": [
+        1037,
+        411,
+        1143,
+        409,
+        1145,
+        433,
+        1039,
+        435
+      ],
+      "text": "",
+      "confidence": 0.0,
+      "detection_confidence": 100.0,
+      "source": "none"
+    },
+    {
+      "id": 25,
+      "bbox": [
+        894,
+        186,
+        978,
+        183,
+        983,
+        222,
+        898,
+        225
+      ],
+      "text": "",
+      "confidence": 0.0,
+      "detection_confidence": 100.0,
+      "source": "none"
+    },
+    {
+      "id": 26,
+      "bbox": [
+        355,
+        420,
+        413,
+        420,
+        414,
+        447,
+        356,
+        448
+      ],
+      "text": "Hash",
+      "confidence": 96.0,
+      "detection_confidence": 99.99,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 27,
+      "bbox": [
+        49,
+        433,
+        98,
+        432,
+        99,
+        458,
+        50,
+        459
+      ],
+      "text": "Fils",
+      "confidence": 67.0,
+      "detection_confidence": 99.99,
+      "source": "enhanced-psm7"
+    },
+    {
+      "id": 28,
+      "bbox": [
+        1265,
+        676,
+        1322,
+        675,
+        1323,
+        701,
+        1265,
+        702
+      ],
+      "text": "Alert",
+      "confidence": 96.0,
+      "detection_confidence": 99.99,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 29,
+      "bbox": [
+        543,
+        427,
+        605,
+        427,
+        605,
+        453,
+        543,
+        453
+      ],
+      "text": "Alert",
+      "confidence": 96.0,
+      "detection_confidence": 99.99,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 30,
+      "bbox": [
+        270,
+        451,
+        385,
+        450,
+        386,
+        473,
+        271,
+        474
+      ],
+      "text": "Compariso",
+      "confidence": 92.0,
+      "detection_confidence": 99.99,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 31,
+      "bbox": [
+        764,
+        309,
+        812,
+        308,
+        814,
+        337,
+        766,
+        337
+      ],
+      "text": "File",
+      "confidence": 96.0,
+      "detection_confidence": 99.99,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 32,
+      "bbox": [
+        855,
+        29,
+        958,
+        27,
+        960,
+        68,
+        857,
+        70
+      ],
+      "text": "",
+      "confidence": 0.0,
+      "detection_confidence": 99.99,
+      "source": "none"
+    },
+    {
+      "id": 33,
+      "bbox": [
+        1215,
+        426,
+        1268,
+        426,
+        1267,
+        454,
+        1215,
+        454
+      ],
+      "text": "Risk",
+      "confidence": 96.0,
+      "detection_confidence": 99.99,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 34,
+      "bbox": [
+        948,
+        408,
+        1017,
+        406,
+        1019,
+        436,
+        950,
+        438
+      ],
+      "text": "if",
+      "confidence": 68.0,
+      "detection_confidence": 99.99,
+      "source": "enhanced-psm7"
+    },
+    {
+      "id": 35,
+      "bbox": [
+        1004,
+        578,
+        1075,
+        578,
+        1075,
+        600,
+        1005,
+        601
+      ],
+      "text": "Analys",
+      "confidence": 92.0,
+      "detection_confidence": 99.99,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 36,
+      "bbox": [
+        1087,
+        185,
+        1160,
+        182,
+        1166,
+        225,
+        1092,
+        228
+      ],
+      "text": "FIMA",
+      "confidence": 89.0,
+      "detection_confidence": 99.99,
+      "source": "raw-psm8"
+    },
+    {
+      "id": 37,
+      "bbox": [
+        1007,
+        437,
+        1132,
+        432,
+        1135,
+        460,
+        1010,
+        465
+      ],
+      "text": "",
+      "confidence": 0.0,
+      "detection_confidence": 99.99,
+      "source": "none"
+    },
+    {
+      "id": 38,
+      "bbox": [
+        1259,
+        582,
+        1335,
+        582,
+        1335,
+        608,
+        1259,
+        608
+      ],
+      "text": "Making",
+      "confidence": 96.0,
+      "detection_confidence": 99.98,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 39,
+      "bbox": [
+        1003,
+        465,
+        1074,
+        465,
+        1073,
+        488,
+        1003,
+        488
+      ],
+      "text": "Analys",
+      "confidence": 92.0,
+      "detection_confidence": 99.98,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 40,
+      "bbox": [
+        1002,
+        326,
+        1088,
+        324,
+        1090,
+        347,
+        1004,
+        348
+      ],
+      "text": "Analysis",
+      "confidence": 89.0,
+      "detection_confidence": 99.98,
+      "source": "raw-psm7"
+    },
+    {
+      "id": 41,
+      "bbox": [
+        286,
+        303,
+        324,
+        303,
+        323,
+        330,
+        285,
+        330
+      ],
+      "text": "Tike",
+      "confidence": 68.0,
+      "detection_confidence": 99.98,
+      "source": "enhanced-psm8"
+    },
+    {
+      "id": 42,
+      "bbox": [
+        305,
+        183,
+        363,
+        180,
+        373,
+        226,
+        315,
+        230
+      ],
+      "text": "FIM",
+      "confidence": 67.0,
+      "detection_confidence": 99.97,
+      "source": "enhanced-psm8"
+    },
+    {
+      "id": 43,
+      "bbox": [
+        1260,
+        557,
+        1344,
+        555,
+        1345,
+        582,
+        1262,
+        583
+      ],
+      "text": "",
+      "confidence": 0.0,
+      "detection_confidence": 99.97,
+      "source": "none"
+    }
+  ],
+  "total_detections": 37,
+  "processing_time_ms": 42337.17
+}

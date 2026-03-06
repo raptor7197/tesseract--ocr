@@ -162,6 +162,19 @@ class SceneTextPipeline:
                 "detection_confidence": round(det_conf * 100, 2),
                 "source": source,
             }
+
+            if detection["text"] and detection["confidence"] < self.tess_conf:
+                logger.debug(
+                    "Detection %d: filtered low-confidence text '%s' (%.1f%% < %.1f%%)",
+                    i + 1,
+                    detection["text"],
+                    detection["confidence"],
+                    self.tess_conf,
+                )
+                detection["text"] = ""
+                detection["confidence"] = 0.0
+                detection["source"] = f"{source}-filtered"
+
             detections.append(detection)
 
             if ocr_result["text"]:
